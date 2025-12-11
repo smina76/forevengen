@@ -1,0 +1,229 @@
+from random import randint
+import zhodaninamegen
+import planetnamegen
+
+
+class World:
+    """A model of a Traveller RPG world"""
+	
+    def __init__(self, maphex, worldname, allegiance):
+        """Initialize map hex, world name, and allegiance"""
+        self.maphex = maphex
+        self.worldname = worldname
+        self.allegiance = allegiance
+        
+    def generateworld(self):
+        """Randomly generate world stats using Mongoose 2E rules"""
+        #Determine world size
+        #Roll D6 to see if it's a Super-Earth
+        self.size = randint(1,6) + randint(1,6) - 2
+        
+        #Determine world atmosphere
+        self.atmosphere = randint(1,6) + randint(1,6) - 7 + self.size
+        if self.atmosphere < 0:
+            self.atmosphere = 0
+            
+        if self.atmosphere > 15:
+            self.atmosphere = 15
+
+        #Determine world hydrosphere
+        self.hydro = randint(1,6) + randint(1,6) - 7 + self.atmosphere
+        if self.hydro < 0:
+            self.hydro = 0
+            
+        if self.hydro > 10:
+            self.hydro = 10    
+              
+        #Determine world population
+        self.population = randint(1,6) + randint(1,6) - 2
+        
+        #Determine world government
+        self.government = randint(1,6) + randint(1,6) - 7 + self.population
+        if self.government < 0:
+            self.government = 0
+        
+        if self.government > 15:
+            self.government = 15
+        
+        #Determine world law level
+        self.lawlevel = randint(1,6) + randint(1,6) - 7 + self.government
+        if self.lawlevel < 0:
+            self.lawlevel = 0
+            
+        if self.lawlevel > 9:
+            self.lawlevel = 9    
+            
+        #Determine world starport
+        self.starport = randint(1,6) + randint(1,6) 
+    
+        if self.population > 9:
+            self.starport = self.starport + 2
+        elif self.population == 8 or self.population== 9:
+            self.starport = self.starport + 1
+        elif self.population == 3 or self.population== 4:
+            self.starport = self.starport - 1       
+        elif self.population < 3:
+            self.starport = self.starport - 2 
+            
+         #Determine world tech level              
+        self.techlevel = randint(1,6)
+    
+        if self.starport == 10:
+            self.techlevel = self.techlevel + 6
+        elif self.starport == 11:
+            self.techlevel = self.techlevel + 4   
+        elif self.starport == 12:
+            self.techlevel = self.techlevel + 2
+        elif self.starport >= 16:
+            self.techlevel = self.techlevel - 2
+
+        if self.size == 0:
+            self.techlevel = self.techlevel + 2
+        elif self.size == 1:
+            self.techlevel = self.techlevel + 2   
+        elif self.size == 2:
+            self.techlevel = self.techlevel + 1
+        elif self.size == 3:
+            self.techlevel = self.techlevel + 1
+        elif self.size == 4:
+            self.techlevel = self.techlevel + 1    
+
+        if self.atmosphere >= 0 and self.atmosphere <= 4:
+            self.techlevel = self.techlevel + 1
+        elif self.atmosphere >= 10 and self.atmosphere <= 15:
+            self.techlevel = self.techlevel + 1    
+
+        if self.hydro == 0 or self.hydro == 9:
+            self.techlevel = self.techlevel + 1
+        elif self.hydro == 10:
+            self.techlevel = self.techlevel + 2         
+
+        if self.population >= 1 and self.population <= 5:
+            self.techlevel = self.techlevel + 1
+        elif self.population == 8:
+            self.techlevel = self.techlevel + 1  
+        elif self.population == 9:
+            self.techlevel = self.techlevel + 2  
+        elif self.population == 10:
+            self.techlevel = self.techlevel + 4  
+         
+        if self.government == 0:
+            self.techlevel = self.techlevel + 1
+        elif self.government == 5:
+            self.techlevel = self.techlevel + 1  
+        elif self.government == 7:
+            self.techlevel = self.techlevel + 2  
+        elif self.government == 13:
+            self.techlevel = self.techlevel - 2  
+        elif self.government == 14:
+            self.techlevel = self.techlevel - 2    
+        
+        if self.techlevel > 15:
+            self.techlevel = 15 
+        
+        self.tradecodes = self.worldgen_tradecodes()
+                
+    def cleanstat(self, stat):
+        hexcodes = {10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H'}
+        
+        if stat <= 9:
+            result = str(stat)
+        else:
+            result = hexcodes[int(stat)]
+            
+        return result
+    
+    def uwp(self):
+        """Export UWP code for world"""
+        
+        portcodes = {3: 'E', 4: 'E', 5: 'D', 6: 'D', 7: 'C', 8: 'C', 9: 'B', 10: 'B'} 
+    
+        if self.starport <= 2:
+            result = "X"
+        elif self.starport >= 11:
+            result = "A"
+        else:
+            result = portcodes[self.starport]
+                
+        result = result + self.cleanstat(self.size)
+        result = result + self.cleanstat(self.atmosphere)
+        result = result + self.cleanstat(self.hydro) 
+        result = result + self.cleanstat(self.population) 
+        result = result + self.cleanstat(self.government) 
+        result = result + self.cleanstat(self.lawlevel) 
+        result = result + "-" + self.cleanstat(self.techlevel)
+        
+        return result
+        
+    def worldgen_tradecodes(self):
+        result=""
+        if (self.atmosphere >= 4 and self.atmosphere <= 9) and (self.hydro >= 4 and self.hydro <= 8) and (self.population >= 5 and self.population <= 7):
+            result = result + "Ag "
+            
+        if self.size == 0 and self.atmosphere == 0 and self.hydro == 0:
+            result = result + "As "
+            
+        if self.population == 0 and self.government == 0 and self.lawlevel == 0:
+            result = result + "Ba "            
+            
+        if (self.atmosphere >= 2 and self.atmosphere <= 9) and (self.hydro == 0):
+            result = result + "De "
+            
+        if (self.atmosphere >= 10) and (self.hydro >= 1):
+            result = result + "Fl "
+
+        if (self.size >= 6 and self.size <= 8) and (self.hydro >= 1 and self.hydro >= 7) and (self.atmosphere == 5 or self.atmosphere == 6 or self.atmosphere == 8):
+            result = result + "Ga "
+            
+        if (self.population >= 9): 
+            result = result + "Hi "
+            
+        if (self.techlevel >= 12):
+            result = result + "Ht "
+            
+        if (self.atmosphere <= 1) and (self.hydro >= 1):
+            result = result + "Ic "
+        
+        return result
+        
+world_list = [ ]
+
+#opens a tab-delimited text file that contains all of the hex numbers
+forevenfile = open( "ForevenBlank.csv", "rt" )
+
+line = forevenfile.readline()
+#print(line)
+
+for x in range(1,358,1):
+        line = forevenfile.readline()
+        values = line.split("\t")
+        #print(line)
+               
+        hexnumber = values[0]
+        
+        allegiancecode = values[12]
+                
+        if not values[1]:
+            if allegiancecode == "ZhIN":
+                planetname = zhodaninamegen.zhodaniname(3)
+            else:
+                planetname = planetnamegen.planetnamegen()
+        else:
+            planetname = values[1]
+           
+        #planetname = planetnamegen.planetnamegen()
+       # print(planetname)
+        world_list.append(World(hexnumber, planetname, allegiancecode))  
+                
+        lastitem = len(world_list)-1
+        world_list[lastitem].generateworld()
+        print(f"{world_list[lastitem].maphex} {world_list[lastitem].worldname} {world_list[lastitem].uwp()} {world_list[lastitem].tradecodes} {world_list[lastitem].allegiance}" )
+forevenfile.close()
+
+
+#world1 = World('0123', 'Avernus', 'ZdIn')
+#world1.generateworld()
+
+#print("Starport:" , world1.starport , "Size:" , world1.size , "Atmos:" , world1.atmosphere , "Hydro:" , world1.hydro , "Pop:" , world1.population, "Gov:", world1.government, "LL:", world1.lawlevel, "TL:" ,  world1.techlevel)
+#print(f"{world1.maphex} {world1.worldname} {world1.uwp()}")
+
